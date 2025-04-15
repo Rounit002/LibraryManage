@@ -5,35 +5,14 @@ module.exports = (pool, bcrypt) => {
     router.post('/login', async (req, res) => {
       try {
         const { username, password } = req.body;
-        
-        // Find user in database
         const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-        
-        if (result.rows.length === 0) {
-          return res.status(401).json({ message: 'Invalid credentials' });
-        }
-        
+        if (result.rows.length === 0) return res.status(401).json({ message: 'Invalid credentials' });
         const user = result.rows[0];
-        
-        // Compare password
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        
-        if (!isPasswordValid) {
-          return res.status(401).json({ message: 'Invalid credentials' });
-        }
-        
-        // Create session
-        req.session.user = {
-          id: user.id,
-          username: user.username,
-          role: user.role
-        };
-        
-        return res.json({ message: 'Login successful', user: {
-          id: user.id,
-          username: user.username,
-          role: user.role
-        }});
+        if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials' });
+        req.session.user = { id: user.id, username: user.username, role: user.role };
+        console.log('Session set:', req.session.user); // Debug
+        return res.json({ message: 'Login successful', user: { id: user.id, username: user.username, role: user.role } });
       } catch (err) {
         console.error('Login error:', err);
         return res.status(500).json({ message: 'Server error', error: err.message });
