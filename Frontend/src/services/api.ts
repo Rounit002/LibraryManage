@@ -19,7 +19,9 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      window.location.href = '/login'; // Redirect to login on 401
+      console.warn('401 Unauthorized - Redirecting to login:', error.response?.data?.message);
+      // Clear session or state before redirect to avoid loops (handled by AuthContext)
+      window.location.href = '/login';
     }
     const errorData = error.response?.data || { message: error.message };
     return Promise.reject(new Error(errorData.message || 'An unexpected error occurred'));
@@ -47,13 +49,14 @@ const api = {
     try {
       const response = await apiClient.post('/auth/login', { username, password });
       const { message, user } = response.data;
-      if (message === 'Login successful') {
+      if (message === 'Login successful' && user) {
+        console.log('Login successful, user:', user);
         return user; // Return the user object
       } else {
         throw new Error('Login failed: Invalid response from server');
       }
     } catch (error) {
-      console.error('Login error details:', error);
+      console.error('Login error details:', error.response?.data || error.message);
       throw error instanceof Error ? error : new Error('Login failed due to server error');
     }
   },
@@ -61,8 +64,10 @@ const api = {
   logout: async () => {
     try {
       const response = await apiClient.get('/auth/logout');
+      console.log('Logout response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Logout error:', error.response?.data || error.message);
       throw error;
     }
   },
@@ -70,13 +75,15 @@ const api = {
   checkAuthStatus: async () => {
     try {
       const response = await apiClient.get('/auth/status');
+      console.log('Auth status check:', response.data);
       return response.data; // Expecting { isAuthenticated: boolean, user?: { id: string, username: string, role: string } }
     } catch (error) {
+      console.error('Auth status check failed:', error.response?.data || error.message);
       throw error;
     }
   },
 
-  // Student methods
+  // Student methods (unchanged)
   getStudents: async () => {
     try {
       const response = await apiClient.get('/students');
@@ -153,7 +160,7 @@ const api = {
     try {
       const response = await apiClient.put(`/students/${id}`, {
         ...membershipData,
-        status: 'active', // Ensure status is set to active on renewal
+        status: 'active',
       });
       return response.data;
     } catch (error) {
@@ -170,7 +177,7 @@ const api = {
     }
   },
 
-  // Schedule methods
+  // Schedule methods (unchanged)
   getSchedules: async () => {
     try {
       const response = await apiClient.get('/schedules');
@@ -207,7 +214,7 @@ const api = {
     }
   },
 
-  // User profile methods
+  // User profile methods (unchanged)
   getUserProfile: async () => {
     try {
       const response = await apiClient.get('/users/profile');
