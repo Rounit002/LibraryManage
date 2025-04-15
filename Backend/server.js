@@ -37,19 +37,12 @@ pool.connect((err, client, release) => {
   release();
 });
 
-// Log database errors
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle client:', err);
-});
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'dist')));
-
-app.set('trust proxy', 1); // Trust Render's proxy
 
 app.use(session({
   store: new pgSession({
@@ -63,7 +56,6 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
   },
 }));
 
@@ -99,30 +91,35 @@ app.get('/*', (req, res) => {
   }
 });
 
+// Initialize the session table in the database
 async function initializeSessionTable() {
   try {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS "session" (
-        "sid" varchar NOT NULL COLLATE "default",
-        "sess" json NOT NULL,
-        "expire" timestamp(6) NOT NULL,
-        CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
-      );
-      CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+      CREATE TABLE IF NOT EXISTS session (
+        sid varchar NOT NULL PRIMARY KEY,
+        sess json NOT NULL,
+        expire timestamp(6) NOT NULL
+      )
     `);
-    console.log('Session table ensured');
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire)
+    `);
+    console.log('Session table initialized');
   } catch (err) {
-    console.error('Error creating session table:', err);
+    console.error('Error initializing session table:', err);
   }
 }
 
 const PORT = process.env.PORT || 3000;
-initializeSessionTable().then(() => {
+
+// Start the server after initializing the session table
+(async () => {
+  await initializeSessionTable();
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     createDefaultAdmin();
   });
-});
+})();
 
 async function createDefaultAdmin() {
   try {
