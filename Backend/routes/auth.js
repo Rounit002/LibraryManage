@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
-const SECRET_KEY = process.env.JWT_SECRET || 'your-secure-secret-key'; // Use an env variable in production
+const SECRET_KEY = process.env.JWT_SECRET || 'your-secure-secret-key'; // Use env variable
 
 module.exports = (pool, bcrypt) => {
   // Login route
@@ -20,14 +20,12 @@ module.exports = (pool, bcrypt) => {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
-      // Generate JWT token
       const token = jwt.sign(
         { id: user.id, username: user.username, role: user.role },
         SECRET_KEY,
-        { expiresIn: '1h' } // Token expires in 1 hour
+        { expiresIn: '1h' }
       );
-
-      console.log('Token generated:', token); // Debug
+      console.log('Token generated:', token);
       return res.json({
         message: 'Login successful',
         token,
@@ -39,14 +37,14 @@ module.exports = (pool, bcrypt) => {
     }
   });
 
-  // Logout route (client-side only, no server-side session to destroy)
+  // Logout route
   router.get('/logout', (req, res) => {
     res.json({ message: 'Logout successful, please remove token on client-side' });
   });
 
   // Check auth status route
   router.get('/status', (req, res) => {
-    const token = req.headers.authorization?.split(' ')[1]; // Expecting "Bearer <token>"
+    const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
       return res.json({ isAuthenticated: false });
     }

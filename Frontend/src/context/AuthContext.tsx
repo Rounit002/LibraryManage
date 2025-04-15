@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('Auth check failed:', error);
         setUser(null);
+        localStorage.removeItem('token'); // Clear token on failure
       } finally {
         setIsLoading(false);
       }

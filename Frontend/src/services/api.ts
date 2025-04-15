@@ -6,14 +6,15 @@ const API_URL = process.env.NODE_ENV === 'production'
 
 const apiClient = axios.create({
   baseURL: API_URL,
-  withCredentials: true // Keep this for now, though JWT makes it less critical
+  withCredentials: false // Disable withCredentials since we're using JWT
 });
 
 // Store and manage JWT token
 let token: string | null = localStorage.getItem('token');
 
+// Only add Authorization header for non-login requests
 apiClient.interceptors.request.use((config) => {
-  if (token) {
+  if (token && config.url !== '/auth/login') {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -54,10 +55,12 @@ const transformKeysToCamelCase = (obj: any): any => {
 const api = {
   login: async ({ username, password }: { username: string; password: string }) => {
     try {
-      const response = await apiClient.post('/auth/login', { username, password });
+      const response = await apiClient.post('/auth/login', { username, password }, {
+        headers: { 'Content-Type': 'application/json' } // Explicitly set content type
+      });
       const { message, token, user } = response.data;
       if (message === 'Login successful' && token && user) {
-        console.log('Login successful, user:', user);
+        console.log('Login successful, user:', user, 'token:', token);
         localStorage.setItem('token', token); // Store token
         return user; // Return user object
       } else {
@@ -92,7 +95,7 @@ const api = {
     }
   },
 
-  // Other methods (unchanged, ensure they use the token via interceptor)
+  // Other methods (unchanged)
   getStudents: async () => {
     try {
       const response = await apiClient.get('/students');

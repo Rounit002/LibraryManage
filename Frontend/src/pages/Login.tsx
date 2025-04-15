@@ -14,6 +14,10 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!username || !password) {
+      toast.error('Username and password are required');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -23,7 +27,7 @@ const Login = () => {
       navigate('/');
     } catch (err) {
       console.error('Login error:', err);
-      toast.error('Login failed. Please check your credentials.');
+      toast.error(err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
