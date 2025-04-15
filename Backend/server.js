@@ -12,30 +12,25 @@ require('dotenv').config();
 const app = express();
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? 'https://librarymanage-sm1b.onrender.com' 
+  origin: process.env.NODE_ENV === 'production'
+    ? 'https://librarymanage-sm1b.onrender.com'
     : 'http://localhost:8080',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: parseInt(process.env.DB_PORT || '5432'),
-});
+const dbConfig = process.env.DATABASE_URL
+  ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+  : {
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      password: process.env.DB_PASSWORD,
+      port: parseInt(process.env.DB_PORT || '5432'),
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    };
 
-// Debug database connection
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('Database connection error:', err.stack);
-  } else {
-    console.log('Database connected successfully');
-  }
-  release();
-});
+const pool = new Pool(dbConfig);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -48,6 +43,7 @@ app.use(session({
   store: new pgSession({
     pool: pool,
     ttl: 24 * 60 * 60,
+    tableName: 'session'
   }),
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
@@ -56,7 +52,8 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-  },
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  }
 }));
 
 const authenticateUser = (req, res, next) => {
@@ -102,10 +99,7 @@ async function createDefaultAdmin() {
     const userCount = await pool.query('SELECT COUNT(*) FROM users');
     if (parseInt(userCount.rows[0].count) === 0) {
       const hashedPassword = await bcrypt.hash('admin', 10);
-      await pool.query(
-        'INSERT INTO users (username, password, role) VALUES ($1, $2, $3)',
-        ['admin', hashedPassword, 'admin']
-      );
+      await pool.query('INSERT INTO users (username, password, role) VALUES ($1, $2, $3)', ['admin', hashedPassword, 'admin']);
       console.log('Default admin user created');
     }
   } catch (err) {
