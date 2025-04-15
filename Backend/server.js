@@ -11,7 +11,6 @@ require('dotenv').config();
 
 const app = express();
 
-// CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? 'https://librarymanage-sm1b.onrender.com' 
@@ -20,7 +19,6 @@ app.use(cors({
   credentials: true
 }));
 
-// Database connection
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -49,24 +47,23 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // Trust Render's proxy
 app.set('trust proxy', 1);
 
-// Session configuration
 app.use(session({
   store: new pgSession({
     pool: pool,
-    ttl: 24 * 60 * 60, // 24 hours
+    ttl: 24 * 60 * 60,
   }),
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Secure in production
-    sameSite: 'lax' // Ensures cookies work with same-origin requests
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax', // Improve cookie handling
   },
 }));
 
-// Initialize session table in PostgreSQL
+// Initialize session table
 async function initializeSessionTable() {
   try {
     await pool.query(`
@@ -85,9 +82,6 @@ async function initializeSessionTable() {
   }
 }
 
-initializeSessionTable();
-
-// Authentication middleware
 const authenticateUser = (req, res, next) => {
   console.log('Auth check:', req.session.user, req.path);
   if (req.path === '/api/auth/login' || (req.session && req.session.user)) {
@@ -97,7 +91,6 @@ const authenticateUser = (req, res, next) => {
   }
 };
 
-// Routes
 const authRoutes = require('./routes/auth')(pool, bcrypt);
 const userRoutes = require('./routes/users')(pool, bcrypt);
 const studentRoutes = require('./routes/students')(pool);
@@ -112,7 +105,6 @@ app.get('/api', (req, res) => {
   res.json({ message: 'Student Management API' });
 });
 
-// Serve frontend
 app.get('/*', (req, res) => {
   const indexPath = path.join(__dirname, 'dist', 'index.html');
   if (fs.existsSync(indexPath)) {
@@ -123,12 +115,15 @@ app.get('/*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  createDefaultAdmin();
+
+// Start server after initializing session table
+initializeSessionTable().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    createDefaultAdmin();
+  });
 });
 
-// Create default admin user
 async function createDefaultAdmin() {
   try {
     const userCount = await pool.query('SELECT COUNT(*) FROM users');
