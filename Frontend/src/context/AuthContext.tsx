@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import api from '../services/api'; // Adjust the import path if necessary
+import api from '../services/api';
 
 interface User {
   id: string;
@@ -10,8 +10,8 @@ interface User {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (userData: User) => void;
-  logout: () => Promise<void>;
+  login: (user: User) => void;
+  logout: () => void;
   isLoading: boolean;
 }
 
@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   user: null,
   login: () => {},
-  logout: async () => {},
+  logout: () => {},
   isLoading: false,
 });
 
@@ -28,34 +28,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let intervalId: NodeJS.Timeout;
     const checkAuth = async () => {
       try {
         const data = await api.checkAuthStatus();
-        if (data.isAuthenticated && data.user) {
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
+        setUser(data.isAuthenticated ? data.user : null);
       } catch (error) {
+        console.error('Auth check failed:', error);
         setUser(null);
       } finally {
         setIsLoading(false);
       }
     };
+
     checkAuth();
+    intervalId = setInterval(checkAuth, 30000); // Recheck every 30 seconds
+    return () => clearInterval(intervalId);
   }, []);
 
-  const login = (userData: User) => {
-    setUser(userData);
+  const login = (user: User) => {
+    setUser(user);
+    setIsLoading(false);
   };
 
   const logout = async () => {
+    setIsLoading(true);
     try {
       await api.logout();
+      setUser(null);
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
-      setUser(null);
+      setIsLoading(false);
     }
   };
 

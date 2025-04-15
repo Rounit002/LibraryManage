@@ -15,15 +15,15 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const user = await api.login({ username, password });
-      login({ username: user.username }); // Use username from response
+      login(user); // Pass the full user object
       toast.success('Login successful!');
       navigate('/');
     } catch (err) {
-      console.error(err);
-      toast.error('Login failed. Please try again.');
+      console.error('Login error:', err);
+      toast.error('Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,7 @@ const Login = () => {
             <h1 className="text-2xl font-bold">Admin Login</h1>
             <p className="text-gray-500 mt-2">Sign in to access your dashboard</p>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
@@ -58,10 +58,11 @@ const Login = () => {
                   className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
                   placeholder="Enter your username"
                   required
+                  autoComplete="username"
                 />
               </div>
             </div>
-            
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
@@ -78,10 +79,11 @@ const Login = () => {
                   className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
                   placeholder="Enter your password"
                   required
+                  autoComplete="current-password"
                 />
               </div>
             </div>
-            
+
             <div>
               <button
                 type="submit"
@@ -92,7 +94,7 @@ const Login = () => {
               </button>
             </div>
           </form>
-          
+
           <div className="mt-6 text-center text-sm text-gray-500">
             <p>Use username: admin, password: admin for demo</p>
           </div>
