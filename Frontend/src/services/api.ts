@@ -1,11 +1,12 @@
 import axios from 'axios';
 
-const API_URL = 'https://librarymanage-sm1b.onrender.com/api';
+const API_URL = process.env.NODE_ENV === 'production'
+  ? 'https://librarymanage-sm1b.onrender.com/api'
+  : 'http://localhost:3000/api';
 
-// Create an Axios instance with credentials support
 const apiClient = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // Ensures cookies are sent with requests
+  withCredentials: true
 });
 
 // Add response interceptor to transform snake_case to camelCase and handle errors

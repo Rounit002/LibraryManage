@@ -13,9 +13,11 @@ const app = express();
 
 // Enable CORS for requests from the frontend
 app.use(cors({
-  origin: 'http://localhost:8080', // Update to your production domain later
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://librarymanage-sm1b.onrender.com' 
+    : 'http://localhost:8080',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true, // Allow cookies for session management
+  credentials: true
 }));
 
 // Database connection using environment variables
@@ -57,7 +59,8 @@ app.use(
 
 // Authentication middleware
 const authenticateUser = (req, res, next) => {
-  if (req.session && req.session.user) {
+  console.log('Auth check:', req.session.user, req.path);
+  if (req.path === '/api/auth/login' || (req.session && req.session.user)) {
     return next();
   } else {
     return res.status(401).json({ message: 'Unauthorized' });
