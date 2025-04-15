@@ -12,20 +12,24 @@ require('dotenv').config();
 const app = express();
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? 'https://librarymanage-sm1b.onrender.com' 
+  origin: process.env.NODE_ENV === 'production'
+    ? 'https://librarymanage-sm1b.onrender.com'
     : 'http://localhost:8080',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: parseInt(process.env.DB_PORT || '5432'),
-});
+const dbConfig = process.env.DATABASE_URL
+  ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+  : {
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      password: process.env.DB_PASSWORD,
+      port: parseInt(process.env.DB_PORT || '5432'),
+    };
+
+const pool = new Pool(dbConfig);
 
 // Debug database connection
 pool.connect((err, client, release) => {
@@ -48,6 +52,7 @@ app.use(session({
   store: new pgSession({
     pool: pool,
     ttl: 24 * 60 * 60,
+    tableName: 'session'
   }),
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
@@ -56,7 +61,8 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-  },
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  }
 }));
 
 const authenticateUser = (req, res, next) => {
@@ -67,6 +73,16 @@ const authenticateUser = (req, res, next) => {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 };
+
+// Add /auth/status endpoint
+app.get('/api/auth/status', (req, res) => {
+  console.log('Status check:', req.session.user);
+  if (req.session && req.session.user) {
+    res.json({ isAuthenticated: true, user: req.session.user });
+  } else {
+    res.json({ isAuthenticated: false });
+  }
+});
 
 const authRoutes = require('./routes/auth')(pool, bcrypt);
 const userRoutes = require('./routes/users')(pool, bcrypt);
