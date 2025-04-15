@@ -11,6 +11,7 @@ require('dotenv').config();
 
 const app = express();
 
+// CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? 'https://librarymanage-sm1b.onrender.com' 
@@ -19,6 +20,7 @@ app.use(cors({
   credentials: true
 }));
 
+// Database connection
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -44,54 +46,27 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'dist')));
 
+// Trust Render's proxy
+app.set('trust proxy', 1);
+
+// Session configuration
 app.use(session({
   store: new pgSession({
     pool: pool,
-    ttl: 24 * 60 * 60,
+    ttl: 24 * 60 * 60, // 24 hours
   }),
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 24 * 60 * 60 * 1000,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === 'production', // Secure in production
+    sameSite: 'lax' // Ensures cookies work with same-origin requests
   },
 }));
 
-const authenticateUser = (req, res, next) => {
-  console.log('Auth check:', req.session.user, req.path);
-  if (req.path === '/api/auth/login' || (req.session && req.session.user)) {
-    return next();
-  } else {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-};
-
-const authRoutes = require('./routes/auth')(pool, bcrypt);
-const userRoutes = require('./routes/users')(pool, bcrypt);
-const studentRoutes = require('./routes/students')(pool);
-const scheduleRoutes = require('./routes/schedules')(pool);
-
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/students', authenticateUser, studentRoutes);
-app.use('/api/schedules', authenticateUser, scheduleRoutes);
-
-app.get('/api', (req, res) => {
-  res.json({ message: 'Student Management API' });
-});
-
-app.get('/*', (req, res) => {
-  const indexPath = path.join(__dirname, 'dist', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(404).send('Index.html not found in dist folder');
-  }
-});
-
-// Initialize the session table in the database
+// Initialize session table in PostgreSQL
 async function initializeSessionTable() {
   try {
     await pool.query(`
@@ -110,17 +85,50 @@ async function initializeSessionTable() {
   }
 }
 
+initializeSessionTable();
+
+// Authentication middleware
+const authenticateUser = (req, res, next) => {
+  console.log('Auth check:', req.session.user, req.path);
+  if (req.path === '/api/auth/login' || (req.session && req.session.user)) {
+    return next();
+  } else {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+};
+
+// Routes
+const authRoutes = require('./routes/auth')(pool, bcrypt);
+const userRoutes = require('./routes/users')(pool, bcrypt);
+const studentRoutes = require('./routes/students')(pool);
+const scheduleRoutes = require('./routes/schedules')(pool);
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/students', authenticateUser, studentRoutes);
+app.use('/api/schedules', authenticateUser, scheduleRoutes);
+
+app.get('/api', (req, res) => {
+  res.json({ message: 'Student Management API' });
+});
+
+// Serve frontend
+app.get('/*', (req, res) => {
+  const indexPath = path.join(__dirname, 'dist', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Index.html not found in dist folder');
+  }
+});
+
 const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  createDefaultAdmin();
+});
 
-// Start the server after initializing the session table
-(async () => {
-  await initializeSessionTable();
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    createDefaultAdmin();
-  });
-})();
-
+// Create default admin user
 async function createDefaultAdmin() {
   try {
     const userCount = await pool.query('SELECT COUNT(*) FROM users');
