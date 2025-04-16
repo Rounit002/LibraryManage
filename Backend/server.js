@@ -8,7 +8,6 @@ const cors = require('cors');
 const pgSession = require('connect-pg-simple')(session);
 const fs = require('fs');
 require('dotenv').config();
-const jwt = require('jsonwebtoken');
 
 const app = express();
 
@@ -17,7 +16,7 @@ app.use(cors({
     ? 'https://librarymanage-sm1b.onrender.com' 
     : 'http://localhost:8080',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: false // Disable credentials since using JWT
+  credentials: true // Enable credentials to match client's withCredentials: true
 }));
 
 const pool = new Pool({
@@ -48,23 +47,27 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // Trust Render's proxy
 app.set('trust proxy', 1);
 
-// Remove session middleware since we're using JWT
-// app.use(session({...})); // Commented out
-
-const SECRET_KEY = process.env.JWT_SECRET || 'your-secure-secret-key';
+app.use(session({
+  store: new pgSession({
+    pool: pool,
+    ttl: 24 * 60 * 60,
+  }),
+  secret: process.env.SESSION_SECRET || 'your-secure-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  },
+}));
 
 const authenticateUser = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  console.log('Auth check:', token ? 'Token present' : 'No token', req.path);
-  if (req.path === '/api/auth/login' || !token) {
+  console.log('Auth check:', req.session.user, req.path);
+  if (req.path === '/api/auth/login' || (req.session && req.session.user)) {
     return next();
-  }
-  try {
-    const decoded = jwt.verify(token, SECRET_KEY);
-    req.user = decoded; // Attach decoded user to request
-    return next();
-  } catch (err) {
-    console.error('Token verification failed:', err);
+  } else {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 };
@@ -92,7 +95,6 @@ app.get('/*', (req, res) => {
   }
 });
 
-// Initialize session table (optional, can be removed if not using sessions)
 async function initializeSessionTable() {
   try {
     await pool.query(`
@@ -113,7 +115,6 @@ async function initializeSessionTable() {
 
 const PORT = process.env.PORT || 3000;
 
-// Start server
 initializeSessionTable().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

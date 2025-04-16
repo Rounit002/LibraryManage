@@ -1,6 +1,4 @@
 const router = require('express').Router();
-const jwt = require('jsonwebtoken');
-const SECRET_KEY = process.env.JWT_SECRET || 'your-secure-secret-key'; // Use env variable
 
 module.exports = (pool, bcrypt) => {
   // Login route
@@ -19,43 +17,41 @@ module.exports = (pool, bcrypt) => {
       if (!isPasswordValid) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
-
-      const token = jwt.sign(
-        { id: user.id, username: user.username, role: user.role },
-        SECRET_KEY,
-        { expiresIn: '1h' }
-      );
-      console.log('Token generated:', token);
-      return res.json({
-        message: 'Login successful',
-        token,
-        user: { id: user.id, username: user.username, role: user.role }
-      });
+      req.session.user = {
+        id: user.id,
+        username: user.username,
+        role: user.role
+      };
+      console.log('Session set:', req.session.user); // Debug
+      return res.json({ message: 'Login successful', user: {
+        id: user.id,
+        username: user.username,
+        role: user.role
+      }});
     } catch (err) {
       console.error('Login error:', err);
       return res.status(500).json({ message: 'Server error', error: err.message });
     }
   });
-
+  
   // Logout route
   router.get('/logout', (req, res) => {
-    res.json({ message: 'Logout successful, please remove token on client-side' });
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Logout error:', err);
+        return res.status(500).json({ message: 'Server error during logout' });
+      }
+      res.json({ message: 'Logout successful' });
+    });
   });
-
+  
   // Check auth status route
   router.get('/status', (req, res) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.json({ isAuthenticated: false });
+    if (req.session && req.session.user) {
+      return res.json({ isAuthenticated: true, user: req.session.user });
     }
-    try {
-      const decoded = jwt.verify(token, SECRET_KEY);
-      return res.json({ isAuthenticated: true, user: decoded });
-    } catch (err) {
-      console.error('Token verification failed:', err);
-      return res.json({ isAuthenticated: false });
-    }
+    return res.json({ isAuthenticated: false });
   });
-
+  
   return router;
 };

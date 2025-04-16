@@ -20,7 +20,6 @@
     "dotenv": "^16.5.0",
     "express": "^4.19.2",
     "express-session": "^1.18.1",
-    "jsonwebtoken": "^9.0.0",
     "path-to-regexp": "^6.2.2",
     "pg": "^8.14.1",
     "react-time-picker": "^7.0.0"

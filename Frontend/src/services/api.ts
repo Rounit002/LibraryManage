@@ -6,20 +6,10 @@ const API_URL = process.env.NODE_ENV === 'production'
 
 const apiClient = axios.create({
   baseURL: API_URL,
-  withCredentials: false // Disable withCredentials since we're using JWT
+  withCredentials: true
 });
 
-// Store and manage JWT token
-let token: string | null = localStorage.getItem('token');
-
-// Only add Authorization header for non-login requests
-apiClient.interceptors.request.use((config) => {
-  if (token && config.url !== '/auth/login') {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => Promise.reject(error));
-
+// Add response interceptor to transform snake_case to camelCase and handle errors
 apiClient.interceptors.response.use(
   (response) => {
     if (response.data && typeof response.data === 'object') {
@@ -30,7 +20,6 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.warn('401 Unauthorized - Redirecting to login:', error.response?.data?.message);
-      localStorage.removeItem('token');
       window.location.href = '/login';
     }
     const errorData = error.response?.data || { message: error.message };
@@ -38,6 +27,7 @@ apiClient.interceptors.response.use(
   }
 );
 
+// Utility function to convert snake_case to camelCase
 const transformKeysToCamelCase = (obj: any): any => {
   if (Array.isArray(obj)) {
     return obj.map((item) => transformKeysToCamelCase(item));
@@ -53,16 +43,14 @@ const transformKeysToCamelCase = (obj: any): any => {
 };
 
 const api = {
+  // Auth methods
   login: async ({ username, password }: { username: string; password: string }) => {
     try {
-      const response = await apiClient.post('/auth/login', { username, password }, {
-        headers: { 'Content-Type': 'application/json' } // Explicitly set content type
-      });
-      const { message, token, user } = response.data;
-      if (message === 'Login successful' && token && user) {
-        console.log('Login successful, user:', user, 'token:', token);
-        localStorage.setItem('token', token); // Store token
-        return user; // Return user object
+      const response = await apiClient.post('/auth/login', { username, password });
+      const { message, user } = response.data;
+      if (message === 'Login successful' && user) {
+        console.log('Login successful, user:', user);
+        return user; // Return the user object
       } else {
         throw new Error('Login failed: Invalid response from server');
       }
@@ -75,7 +63,6 @@ const api = {
   logout: async () => {
     try {
       const response = await apiClient.get('/auth/logout');
-      localStorage.removeItem('token'); // Clear token on logout
       console.log('Logout response:', response.data);
       return response.data;
     } catch (error) {
@@ -88,14 +75,14 @@ const api = {
     try {
       const response = await apiClient.get('/auth/status');
       console.log('Auth status check:', response.data);
-      return response.data;
+      return response.data; // Expecting { isAuthenticated: boolean, user?: { id: string, username: string, role: string } }
     } catch (error) {
       console.error('Auth status check failed:', error.response?.data || error.message);
       throw error;
     }
   },
 
-  // Other methods (unchanged)
+  // Student methods (unchanged)
   getStudents: async () => {
     try {
       const response = await apiClient.get('/students');
@@ -105,7 +92,145 @@ const api = {
     }
   },
 
-  // ... (keep other methods as they are)
+  getStudent: async (id: string) => {
+    try {
+      const response = await apiClient.get(`/students/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getActiveStudents: async () => {
+    try {
+      const response = await apiClient.get('/students/active');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getExpiredMemberships: async () => {
+    try {
+      const response = await apiClient.get('/students/expired');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getExpiringSoon: async () => {
+    try {
+      const response = await apiClient.get('/students/expiring-soon');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  addStudent: async (studentData: any) => {
+    try {
+      const response = await apiClient.post('/students', studentData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateStudent: async (id: string, studentData: any) => {
+    try {
+      const response = await apiClient.put(`/students/${id}`, studentData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteStudent: async (id: string) => {
+    try {
+      const response = await apiClient.delete(`/students/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  renewMembership: async (id: string, membershipData: any) => {
+    try {
+      const response = await apiClient.put(`/students/${id}`, {
+        ...membershipData,
+        status: 'active',
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getDashboardStats: async () => {
+    try {
+      const response = await apiClient.get('/students/stats/dashboard');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Schedule methods (unchanged)
+  getSchedules: async () => {
+    try {
+      const response = await apiClient.get('/schedules');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  addSchedule: async (scheduleData: any) => {
+    try {
+      const response = await apiClient.post('/schedules', scheduleData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateSchedule: async (id: string, scheduleData: any) => {
+    try {
+      const response = await apiClient.put(`/schedules/${id}`, scheduleData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteSchedule: async (id: string) => {
+    try {
+      const response = await apiClient.delete(`/schedules/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // User profile methods (unchanged)
+  getUserProfile: async () => {
+    try {
+      const response = await apiClient.get('/users/profile');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateUserProfile: async (profileData: any) => {
+    try {
+      const response = await apiClient.put('/users/profile', profileData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default api;
