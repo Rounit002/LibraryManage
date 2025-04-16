@@ -22,7 +22,7 @@ const Login = () => {
 
     try {
       const user = await api.login({ username, password });
-      login(user); // Pass the full user object
+      login(user);
       toast.success('Login successful!');
       navigate('/');
     } catch (err) {
@@ -34,8 +34,11 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-orange-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden w-full max-w-md">
+    <div
+      className="min-h-screen bg-cover bg-center flex items-center justify-center p-4"
+      style={{ backgroundImage: `url('/login-bg.jpg')` }}
+    >
+      <div className="bg-white bg-opacity-95 rounded-xl shadow-lg overflow-hidden w-full max-w-md">
         <div className="p-8">
           <div className="text-center mb-8">
             <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-radial from-purple-300 to-orange-200 mb-4">
@@ -99,8 +102,8 @@ const Login = () => {
             </div>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>Use username: admin, password: admin for demo</p>
+          <div className="mt-8 text-center text-sm text-gray-700">
+            <p>My Library, Delhi</p>
           </div>
         </div>
       </div>

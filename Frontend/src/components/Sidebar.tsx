@@ -23,7 +23,7 @@ const Sidebar = () => {
           <div className="flex items-center gap-2">
             <div className="bg-gradient-radial from-purple-300 to-orange-200 h-10 w-10 rounded-full"></div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-orange-400 text-transparent bg-clip-text">
-              EduAdmin
+               CosMos Lib
             </h1>
           </div>
         )}
