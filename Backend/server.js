@@ -12,9 +12,20 @@ require('dotenv').config();
 const app = express();
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? 'https://librarymanage-sm1b.onrender.com' 
-    : 'http://localhost:8080',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (e.g., file:// from Cordova)
+    // and the production or local development origins
+    const allowedOrigins = [
+      'https://librarymanage-sm1b.onrender.com',
+      'http://localhost:8080',
+      'file://'
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'), false);
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true // Enable credentials to match client's withCredentials: true
 }));

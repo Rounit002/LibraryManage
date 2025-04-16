@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget
+    id="com.example.clinicapp"
+    version="1.0.0"
+    xmlns="http://www.w3.org/ns/widgets"
+    xmlns:cdv="http://cordova.apache.org/ns/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>Library Manage</name>
+    <description>A mobile app for Library management.</description>
+    <author email="your-email@example.com" href="http://yourwebsite.com">Your Name</author>
+    <content src="index.html" />
+    <access origin="https://clinicflow-e7a9.onrender.com" />
+    <access origin="https://cdn.gpteng.co" />
+    <access origin="*" /> <!-- Allow all origins for testing -->
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-navigation href="https://clinicflow-e7a9.onrender.com/*" /> <!-- Allow navigation to API -->
+    <platform name="android">
+        <preference name="android-compileSdkVersion" value="33" />
+        <preference name="android-targetSdkVersion" value="33" />
+        <preference name="android-minSdkVersion" value="21" />
+         <icon src="/logo.png" />
+
+         <preference name="SplashScreen" value="splash" />
+        <preference name="SplashScreenDelay" value="3000" />
+        <preference name="FadeSplashScreen" value="true" />
+        <preference name="FadeSplashScreenDuration" value="500" />
+        <preference name="ShowSplashScreenSpinner" value="false" />
+        <preference name="AutoHideSplashScreen" value="true" />
+
+        <splash src="resources/android/splash-mdpi.png" density="mdpi"/>
+        <splash src="resources/android/splash-hdpi.png" density="hdpi"/>
+        <splash src="resources/android/splash-xhdpi.png" density="xhdpi"/>
+        <splash src="resources/android/splash-xxhdpi.png" density="xxhdpi"/>
+        <splash src="resources/android/splash-xxxhdpi.png" density="xxxhdpi"/>
+
+        <!-- Declare internet and storage permissions -->
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.INTERNET" /> <!-- Add INTERNET permission -->
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+        </config-file>
+        <!-- Target API 29 to avoid scoped storage restrictions (optional) -->
+        <preference name="android-targetSdkVersion" value="29" />
+    </platform>
+</widget>
