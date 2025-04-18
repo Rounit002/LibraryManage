@@ -1,14 +1,14 @@
 import axios from 'axios';
 
-const API_URL = process.env.NODE_ENV === 'production'
-  ? 'https://librarymanage-sm1b.onrender.com/api'
-  : window.location.protocol === 'file:' // Cordova environment
-  ? 'http://localhost:3000/api' // Local server for development
-  : 'http://localhost:3000/api';
-
+// Determine the API URL based on the environment
+const API_URL = window.cordova
+  ? 'https://librarymanage-sm1b.onrender.com/api' // Production server for mobile
+  : process.env.NODE_ENV === 'production'
+    ? 'https://librarymanage-sm1b.onrender.com/api' // Production server for web
+    : 'http://localhost:3000/api';
 const apiClient = axios.create({
   baseURL: API_URL,
-  withCredentials: true
+  withCredentials: true, // Ensure session cookies are sent
 });
 
 // Add response interceptor to transform snake_case to camelCase and handle errors
@@ -23,6 +23,9 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       console.warn('401 Unauthorized - Redirecting to login:', error.response?.data?.message);
       window.location.href = '/login';
+    } else if (!error.response) {
+      console.error('Network error - please check your connection:', error.message);
+      alert('Unable to connect to the server. Please check your internet connection.');
     }
     const errorData = error.response?.data || { message: error.message };
     return Promise.reject(new Error(errorData.message || 'An unexpected error occurred'));
