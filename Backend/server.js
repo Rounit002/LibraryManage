@@ -14,10 +14,11 @@ const app = express();
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (e.g., file:// from Cordova)
-    // and the production or local development origins
+    // and the production, local development, and Cordova testing origins
     const allowedOrigins = [
       'https://librarymanage-sm1b.onrender.com',
       'http://localhost:8080',
+      'https://localhost', // Added to allow Cordova app requests during testing
       'file://'
     ];
     if (!origin || allowedOrigins.includes(origin)) {

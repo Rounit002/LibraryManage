@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const API_URL = process.env.NODE_ENV === 'production'
   ? 'https://librarymanage-sm1b.onrender.com/api'
+  : window.location.protocol === 'file:' // Cordova environment
+  ? 'http://localhost:3000/api' // Local server for development
   : 'http://localhost:3000/api';
 
 const apiClient = axios.create({
