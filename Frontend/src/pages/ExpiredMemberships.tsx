@@ -32,6 +32,8 @@ const ExpiredMemberships = () => {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(addMonths(new Date(), 1));
+  const [currentPage, setCurrentPage] = useState(1);
+  const [studentsPerPage, setStudentsPerPage] = useState(10);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,6 +60,10 @@ const ExpiredMemberships = () => {
 
     fetchStudents();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleRenewClick = (student: any) => {
     setSelectedStudent(student);
@@ -107,6 +113,11 @@ const ExpiredMemberships = () => {
     student.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const indexOfLastStudent = currentPage * studentsPerPage;
+  const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
+  const currentStudents = filteredStudents.slice(indexOfFirstStudent, indexOfLastStudent);
+  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
@@ -136,9 +147,9 @@ const ExpiredMemberships = () => {
               <p className="text-gray-500">Manage all students with expired memberships</p>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div className="p-4 border-b border-gray-200 flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0">
                 <h3 className="text-lg font-medium">Expired Memberships List</h3>
-                <div className="relative w-64">
+                <div className="relative w-full md:w-64">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <input
                     type="text"
@@ -153,51 +164,53 @@ const ExpiredMemberships = () => {
                 <div className="flex justify-center p-8">Loading expired memberships...</div>
               ) : (
                 <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Expiry Date</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredStudents.map((student: any) => (
-                        <TableRow key={student.id}>
-                          <TableCell>{student.name}</TableCell>
-                          <TableCell>{student.email}</TableCell>
-                          <TableCell>
-                            <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
-                              {formatDate(student.membershipEnd)}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-4">
-                              <button
-                                onClick={() => handleViewDetails(student.id)}
-                                className="p-2 bg-gray-50 rounded-md text-blue-600 hover:text-blue-800"
-                              >
-                                <Eye size={18} />
-                              </button>
-                              <button
-                                onClick={() => handleRenewClick(student)}
-                                className="p-2 bg-gray-50 rounded-md text-purple-600 hover:text-purple-800"
-                              >
-                                Renew
-                              </button>
-                              <button
-                                onClick={() => handleDelete(student.id)}
-                                className="p-2 bg-gray-50 rounded-md text-red-600 hover:text-red-800"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead className="hidden md:table-cell">Email</TableHead>
+                          <TableHead>Expiry Date</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {currentStudents.map((student: any) => (
+                          <TableRow key={student.id}>
+                            <TableCell>{student.name}</TableCell>
+                            <TableCell className="hidden md:table-cell">{student.email}</TableCell>
+                            <TableCell>
+                              <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
+                                {formatDate(student.membershipEnd)}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-4">
+                                <button
+                                  onClick={() => handleViewDetails(student.id)}
+                                  className="p-2 bg-gray-50 rounded-md text-blue-600 hover:text-blue-800"
+                                >
+                                  <Eye size={18} />
+                                </button>
+                                <button
+                                  onClick={() => handleRenewClick(student)}
+                                  className="p-2 bg-gray-50 rounded-md text-purple-600 hover:text-purple-800"
+                                >
+                                  Renew
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(student.id)}
+                                  className="p-2 bg-gray-50 rounded-md text-red-600 hover:text-red-800"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                   {filteredStudents.length === 0 && (
                     <div className="py-8 text-center text-gray-500">
                       No expired memberships found matching your search.
@@ -205,23 +218,48 @@ const ExpiredMemberships = () => {
                   )}
                 </>
               )}
-              <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3">
-                <div className="text-sm text-gray-500">
-                  Showing <span className="font-medium">{filteredStudents.length}</span> of{' '}
-                  <span className="font-medium">{students.length}</span> expired memberships
+              {!loading && filteredStudents.length > 0 && (
+                <div className="flex flex-col md:flex-row items-center justify-between border-t border-gray-200 px-6 py-3 space-y-2 md:space-y-0">
+                  <div className="flex items-center space-x-2">
+                    <select
+                      value={studentsPerPage}
+                      onChange={(e) => {
+                        setStudentsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="text-sm border rounded py-2 px-3"
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                    <span className="text-sm text-gray-500">students per page</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span className="text-sm">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Showing {indexOfFirstStudent + 1} to {Math.min(indexOfLastStudent, filteredStudents.length)} of {filteredStudents.length} students
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <button className="p-1 rounded border border-gray-200 hover:bg-gray-50">
-                    <ChevronLeft size={16} />
-                  </button>
-                  <span className="px-3 py-1 text-sm font-medium bg-purple-50 text-purple-700 rounded">
-                    1
-                  </span>
-                  <button className="p-1 rounded border border-gray-200 hover:bg-gray-50">
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

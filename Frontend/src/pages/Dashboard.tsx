@@ -119,12 +119,12 @@ const Dashboard = () => {
                   <AddStudentForm onStudentAdded={handleStudentAdded} />
                 </div>
               ) : (
-                <StudentList key={updateList.toString()} />
+                <StudentList key={updateList.toString()} limit={5} />
               )}
             </div>
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Expiring Soon</h2>
-              <ExpiringMemberships />
+              <ExpiringMemberships limit={5} />
             </div>
           </div>
         </div>

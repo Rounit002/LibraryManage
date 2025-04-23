@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
@@ -10,9 +10,10 @@ import NotFound from "./pages/NotFound";
 import ActiveStudents from "./pages/ActiveStudents";
 import AllStudents from "./pages/AllStudents";
 import ExpiredMemberships from "./pages/ExpiredMemberships";
+import ExpiringMembershipsPage from "./pages/ExpiringMembershipsPage"; // Import the new page
 import Schedule from "./pages/Schedule";
 import Settings from "./pages/Settings";
-import StudentDetails from "./pages/StudentDetails"; // Import the new component
+import StudentDetails from "./pages/StudentDetails";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,11 @@ const AppRoutes = () => {
           <ExpiredMemberships />
         </ProtectedRoute>
       } />
+      <Route path="/expiring-memberships" element={
+        <ProtectedRoute>
+          <ExpiringMembershipsPage />
+        </ProtectedRoute>
+      } /> {/* New route for expiring memberships */}
       <Route path="/schedule" element={
         <ProtectedRoute>
           <Schedule />
@@ -77,7 +83,7 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <StudentDetails />
         </ProtectedRoute>
-      } /> {/* New route for student details */}
+      } />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -89,9 +95,9 @@ const App = () => (
       <AuthProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <HashRouter>
           <AppRoutes />
-        </BrowserRouter>
+        </HashRouter>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
