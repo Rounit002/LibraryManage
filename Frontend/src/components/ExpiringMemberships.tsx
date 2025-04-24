@@ -105,7 +105,7 @@ const ExpiringMemberships: React.FC<ExpiringMembershipsProps> = ({ limit }) => {
             <thead>
               <tr className="bg-gray-50 text-left">
                 <th className="px-6 py-3 text-gray-500 font-medium">Name</th>
-                <th className="px-6 py-3 text-gray-500 font-medium hidden md:table-cell">Email</th>
+                <th className="px-6 py-3 text-gray-500 font-medium hidden md:table-cell">Phone</th>
                 <th className="px-6 py-3 text-gray-500 font-medium">Expiry Date</th>
                 <th className="px-6 py-3 text-gray-500 font-medium">Actions</th>
               </tr>
@@ -114,7 +114,7 @@ const ExpiringMemberships: React.FC<ExpiringMembershipsProps> = ({ limit }) => {
               {currentStudents.map((student: any) => (
                 <tr key={student.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">{student.name}</td>
-                  <td className="px-6 py-4 hidden md:table-cell">{student.email}</td>
+                  <td className="px-6 py-4 hidden md:table-cell">{student.phone}</td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
                       {formatDate(student.membershipEnd)}

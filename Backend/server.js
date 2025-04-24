@@ -11,14 +11,14 @@ require('dotenv').config();
 
 const app = express();
 
-// Enhanced CORS configuration for Cordova and session support
 app.use(cors({
   origin: function (origin, callback) {
+    // Allow requests with no origin (e.g., file:// from Cordova)
+    // and the production or local development origins
     const allowedOrigins = [
       'https://librarymanage-sm1b.onrender.com',
       'http://localhost:8080',
-      'https://localhost',
-      'file://', // Explicitly allow file:// for Cordova
+      'file://'
     ];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -27,8 +27,7 @@ app.use(cors({
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true, // Allow cookies to be sent
-  exposedHeaders: ['Set-Cookie'], // Ensure Set-Cookie header is exposed
+  credentials: true // Enable credentials to match client's withCredentials: true
 }));
 
 const pool = new Pool({
@@ -59,7 +58,6 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // Trust Render's proxy
 app.set('trust proxy', 1);
 
-// Configure session middleware with adjusted cookie settings
 app.use(session({
   store: new pgSession({
     pool: pool,
@@ -72,7 +70,7 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none', // Changed to 'none' for cross-origin requests (Cordova to remote server)
+    sameSite: 'lax',
   },
 }));
 

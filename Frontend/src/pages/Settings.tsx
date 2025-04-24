@@ -253,7 +253,7 @@ const Settings = () => {
                       </div>
                     </div>
                     <div className="mt-6 flex justify-end">
-                      <Button type="submit">Update Password</Button>
+                      {/* <Button type="submit">Update Password</Button> */}
                     </div>
                   </form>
                 </div>

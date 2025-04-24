@@ -110,7 +110,7 @@ const ExpiredMemberships = () => {
 
   const filteredStudents = students.filter((student: any) =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.email.toLowerCase().includes(searchTerm.toLowerCase())
+    student.phone.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const indexOfLastStudent = currentPage * studentsPerPage;
@@ -169,7 +169,7 @@ const ExpiredMemberships = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Name</TableHead>
-                          <TableHead className="hidden md:table-cell">Email</TableHead>
+                          <TableHead className="hidden md:table-cell">Phone</TableHead>
                           <TableHead>Expiry Date</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
@@ -178,7 +178,7 @@ const ExpiredMemberships = () => {
                         {currentStudents.map((student: any) => (
                           <TableRow key={student.id}>
                             <TableCell>{student.name}</TableCell>
-                            <TableCell className="hidden md:table-cell">{student.email}</TableCell>
+                            <TableCell className="hidden md:table-cell">{student.phone}</TableCell>
                             <TableCell>
                               <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
                                 {formatDate(student.membershipEnd)}

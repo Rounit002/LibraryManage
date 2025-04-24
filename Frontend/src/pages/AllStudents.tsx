@@ -51,7 +51,7 @@ const AllStudents = () => {
 
   const filteredStudents = students.filter((student: any) =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.email.toLowerCase().includes(searchTerm.toLowerCase())
+    student.phone.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const indexOfLastStudent = currentPage * studentsPerPage;
@@ -110,7 +110,7 @@ const AllStudents = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Name</TableHead>
-                          <TableHead className="hidden md:table-cell">Email</TableHead>
+                          <TableHead className="hidden md:table-cell">Phone</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="hidden md:table-cell">Membership End</TableHead>
                           <TableHead>Actions</TableHead>
@@ -120,7 +120,7 @@ const AllStudents = () => {
                         {currentStudents.map((student: any) => (
                           <TableRow key={student.id}>
                             <TableCell>{student.name}</TableCell>
-                            <TableCell className="hidden md:table-cell">{student.email}</TableCell>
+                            <TableCell className="hidden md:table-cell">{student.phone}</TableCell>
                             <TableCell>
                               <span
                                 className={`px-2 py-1 rounded-full text-xs ${
